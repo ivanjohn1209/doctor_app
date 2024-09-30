@@ -1,3 +1,6 @@
+import 'package:activity_2_flutter/pages/signup_doctor_page.dart';
+import 'package:activity_2_flutter/pages/signup_patient_page.dart';
+import 'package:activity_2_flutter/pages/user_selection_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -25,7 +28,10 @@ class MyApp extends StatelessWidget {
       routes: {
         '/client': (context) => AuthGuard(child: ClientPage()),
         '/doctor': (context) => AuthGuard(child: DoctorPage()),
-        '/signup': (context) => SignupPage(),
+        // '/signup': (context) => SignupPage(),
+        '/signup-patient': (context) => const SignupPatientPage(),
+        '/signup-doctor': (context) => const SignupDoctorPage(),
+        '/user-select': (context) => UserSelectionPage(),
         '/login': (context) => LoginPage(),
         // Add any additional routes here
       },

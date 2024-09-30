@@ -11,55 +11,80 @@ class _LoginPageState extends State<LoginPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  
+  bool _isLoading = false; // Track loading state
 
   void _login() async {
-    try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
+  setState(() {
+    _isLoading = true; // Show loader
+  });
 
-      String userId = userCredential.user?.uid ?? '';
+  try {
+    UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+      email: _emailController.text,
+      password: _passwordController.text,
+    );
 
-      if (userId.isNotEmpty) {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('accounts')
-            .doc(userId)
-            .get();
+    String userId = userCredential.user?.uid ?? '';
 
-        if (userDoc.exists) {
-          String userType = userDoc['type'] ?? '';
+    if (userId.isNotEmpty) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('accounts')
+          .doc(userId)
+          .get();
 
-          if (userType == 'Doctor') {
+      if (userDoc.exists) {
+        String userType = userDoc['type'] ?? '';
+
+        if (userType == 'Doctor') {
+          if (mounted) {
             Navigator.pushReplacementNamed(context, '/doctor');
-          } else {
-            Navigator.pushReplacementNamed(context, '/client');
           }
         } else {
-          _showErrorDialog(context, 'User data not found in Firestore.');
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/client');
+          }
         }
       } else {
+        if (mounted) {
+          _showErrorDialog(context, 'User data not found in Firestore.');
+        }
+      }
+    } else {
+      if (mounted) {
         _showErrorDialog(context, 'User ID is invalid.');
       }
-    } on FirebaseAuthException catch (e) {
-      String errorMessage = '';
-      if (e.code == 'user-not-found') {
-        errorMessage = 'No user found for that email.';
-      } else if (e.code == 'wrong-password') {
-        errorMessage = 'Incorrect password.';
-      } else if (e.code == 'invalid-email') {
-        errorMessage = 'The email address is not valid.';
-      } else {
-        errorMessage = 'An unknown error occurred: ${e.message}';
-      }
+    }
+  } on FirebaseAuthException catch (e) {
+    String errorMessage = '';
+    if (e.code == 'user-not-found') {
+      errorMessage = 'No user found for that email.';
+    } else if (e.code == 'wrong-password') {
+      errorMessage = 'Incorrect password.';
+    } else if (e.code == 'invalid-email') {
+      errorMessage = 'The email address is not valid.';
+    } else {
+      errorMessage = 'An unknown error occurred: ${e.message}';
+    }
+    if (mounted) {
       _showErrorDialog(context, errorMessage);
-    } catch (e) {
+    }
+  } catch (e) {
+    if (mounted) {
       _showErrorDialog(context, 'An unexpected error occurred: $e');
     }
+  } finally {
+    if (mounted) {
+      setState(() {
+        _isLoading = false; // Hide loader
+      });
+    }
   }
+}
+
 
   void _createAccount() {
-    Navigator.pushReplacementNamed(context, '/signup');
+    Navigator.pushReplacementNamed(context, '/user-select');
   }
 
   void _showErrorDialog(BuildContext context, String errorMessage) {
@@ -119,32 +144,121 @@ class _LoginPageState extends State<LoginPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      TextField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(labelText: 'Email'),
-                      ),
-                      const SizedBox(height: 20),
-                      TextField(
-                        controller: _passwordController,
-                        decoration:
-                            const InputDecoration(labelText: 'Password'),
-                        obscureText: true,
-                      ),
-                      const SizedBox(height: 30),
-                      ElevatedButton(
-                        onPressed: _login,
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: Size(double.infinity, 50),
+                      const SizedBox(height: 40),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        margin: EdgeInsets.symmetric(horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text('Login'),
-                      ),
-                      const SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: _createAccount,
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: Size(double.infinity, 50),
+                        child: TextField(
+                          controller: _emailController,
+                          decoration: const InputDecoration(
+                            labelText: 'Email:',
+                            labelStyle: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            border: InputBorder.none,
+                          ),
                         ),
-                        child: const Text('Create Account'),
+                      ),
+                      const SizedBox(height: 40),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        margin: EdgeInsets.symmetric(horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: TextField(
+                          controller: _passwordController,
+                          decoration: const InputDecoration(
+                            labelText: 'Password:',
+                            labelStyle: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            border: InputBorder.none,
+                          ),
+                          obscureText: true,
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      // Show loader or button based on loading state
+                      _isLoading
+                          ? Center(child: CircularProgressIndicator())
+                          : Container(
+                              margin: EdgeInsets.symmetric(horizontal: 20),
+                              child: ElevatedButton(
+                                onPressed: _login,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFF43AF43),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 40, vertical: 15),
+                                ),
+                                child: const Text(
+                                  'LOGIN',
+                                  style: TextStyle(
+                                    color: Colors.black, // Text color
+                                    fontSize: 16, // Text size
+                                    fontWeight: FontWeight.w400, // Optional: Bold text
+                                  ),
+                                ),
+                              ),
+                            ),
+                      const SizedBox(height: 40),
+                      Container(
+                          margin: EdgeInsets.symmetric(horizontal: 15),
+                          child: const Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: Divider(
+                                  color: Colors.grey,
+                                  thickness: 1,
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                child: Text(
+                                  'or',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Divider(
+                                  color: Colors.grey,
+                                  thickness: 1,
+                                ),
+                              ),
+                            ],
+                          )),
+                      const SizedBox(height: 40),
+                      Container(
+                        margin: EdgeInsets.symmetric(horizontal: 15),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            const Text(
+                              'Don’t have an account yet?',
+                            ),
+                            GestureDetector(
+                              onTap: _createAccount,
+                              child: const Text(
+                                ' Create one.',
+                                style: TextStyle(
+                                  color: Color(0xFF43AF43),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     ],
                   ),
