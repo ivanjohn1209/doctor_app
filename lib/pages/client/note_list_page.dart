@@ -315,8 +315,14 @@ class _NoteListPageState extends State<NoteListPage> {
   Widget build(BuildContext context) {
     User? user = _auth.currentUser;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Note List'),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(100), // Custom height
+        child: AppBar(
+          title: Text('My Notes'),
+          centerTitle: true,
+          backgroundColor: Colors.green,
+          shape: RoundedAppBarShape(), // Custom AppBar shape
+        ),
       ),
       body: Column(
         children: [
@@ -344,12 +350,13 @@ class _NoteListPageState extends State<NoteListPage> {
                         itemCount: notes.length,
                         itemBuilder: (context, index) {
                           var note = notes[index];
-                          return ListTile(
-                            title: Text(note['content']),
-                            subtitle:
-                                Text(note['timestamp'].toDate().toString()),
-                            onTap: () => _showNoteDetails(note),
-                          );
+                          // return ListTile(
+                          //   title: Text(note['content']),
+                          //   subtitle:
+                          //       Text(note['timestamp'].toDate().toString()),
+                          //   onTap: () => _showNoteDetails(note),
+                          // );
+                          return NoteItem(title: note['content'], time: '5:00am');
                         },
                       );
                     },
@@ -365,5 +372,52 @@ class _NoteListPageState extends State<NoteListPage> {
         tooltip: 'Add Note',
       ),
     );
+  }
+}
+
+
+class NoteItem extends StatelessWidget {
+  final String title;
+  final String time;
+
+  NoteItem({required this.title, required this.time});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.green,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ListTile(
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: Icon(Icons.radio_button_unchecked, color: Colors.white),
+          title: Text(
+            title,
+            style: TextStyle(color: Colors.white),
+          ),
+          trailing: Text(
+            time,
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+}
+class RoundedAppBarShape extends RoundedRectangleBorder {
+  @override
+  Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
+    final double radius = 40.0; // Adjust the radius to your preference
+    return Path()
+      ..moveTo(0, 0)
+      ..lineTo(0, rect.height - radius)
+      ..quadraticBezierTo(0, rect.height, radius, rect.height) // Bottom-left curve
+      ..lineTo(rect.width - radius, rect.height)
+      ..quadraticBezierTo(rect.width, rect.height, rect.width, rect.height - radius) // Bottom-right curve
+      ..lineTo(rect.width, 0) // Line to the top-right corner
+      ..close(); // Close the path
   }
 }
