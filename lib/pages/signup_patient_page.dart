@@ -35,6 +35,7 @@ class _SignupPatientPageState extends State<SignupPatientPage> {
 
   String? _selectedGender = 'Male';
   String dropdownValue = 'Client';
+  bool _isLoading = false; // Track loading state
 
   void _signup() async {
     try {
@@ -42,7 +43,9 @@ class _SignupPatientPageState extends State<SignupPatientPage> {
         _showErrorDialog(context, 'Passwords do not match');
         return;
       }
-
+setState(() {
+    _isLoading = true; // Show loader
+  });
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: _controllers['email']!.text,
         password: _controllers['password']!.text,
@@ -71,6 +74,12 @@ class _SignupPatientPageState extends State<SignupPatientPage> {
       );
     } catch (e) {
       _showErrorDialog(context, e.toString());
+    } finally {
+          if (mounted) {
+      setState(() {
+        _isLoading = false; // Hide loader
+      });
+    }
     }
   }
 
@@ -171,7 +180,9 @@ class _SignupPatientPageState extends State<SignupPatientPage> {
                     _buildTextField('password', 'Password:', obscureText: true),
                     _buildTextField('confirmPassword', 'Confirm Password:', obscureText: true),
                     const SizedBox(height: 20),
-                    _buildSignUpButton(),
+                    _isLoading
+                          ? Center(child: CircularProgressIndicator())
+                          :_buildSignUpButton(),
                     const SizedBox(height: 20),
                     _buildLoginRedirect(),
                   ],
