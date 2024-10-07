@@ -1,3 +1,4 @@
+import 'package:activity_2_flutter/pages/client/message_page.dart';
 import 'package:activity_2_flutter/pages/client/task_page.dart';
 import 'package:flutter/material.dart';
 import 'client/note_list_page.dart';
@@ -14,9 +15,9 @@ class _ClientPageState extends State<ClientPage> {
   static final List<Widget> _widgetOptions = <Widget>[
     TaskPage(),
     const NoteListPage(),
+    MessagePage(),
     NotificationPage(),
     SettingsPage(),
-        SettingsPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -59,15 +60,15 @@ bottomNavigationBar: Padding(
             label: '',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add),
-            label: '',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.message),
             label: '',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
+            label: '',
+          ),
+           BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
             label: '',
           ),
         ],

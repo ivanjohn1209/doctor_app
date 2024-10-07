@@ -315,12 +315,30 @@ class _NoteListPageState extends State<NoteListPage> {
   Widget build(BuildContext context) {
     User? user = _auth.currentUser;
     return Scaffold(
+      // appBar: PreferredSize(
+      //   preferredSize: Size.fromHeight(100), // Custom height
+      //   child: AppBar(
+      //     title: Text('My Notes'),
+      //     centerTitle: true,
+      //     backgroundColor: Color(0xFF43AF43),
+      //     shape: RoundedAppBarShape(), // Custom AppBar shape
+      //   ),
+      // ),
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(100), // Custom height
+        preferredSize: Size.fromHeight(100), 
         child: AppBar(
-          title: Text('My Notes'),
+          toolbarHeight: 200.0,
+          title: const Column(
+          children: [
+          const SizedBox(height: 20),
+          Text(
+            "My Notes",
+            style: TextStyle(fontSize: 20, color: Colors.white), 
+        ),
+          ],
+        ),
           centerTitle: true,
-          backgroundColor: Colors.green,
+          backgroundColor: Color(0xFF43AF43),
           shape: RoundedAppBarShape(), // Custom AppBar shape
         ),
       ),
@@ -368,8 +386,9 @@ class _NoteListPageState extends State<NoteListPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddNoteDialog(),
-        child: Icon(Icons.add),
+        child: Icon(Icons.add, color: Colors.white),
         tooltip: 'Add Note',
+        backgroundColor: Color(0xFF43AF43),
       ),
     );
   }
@@ -388,7 +407,7 @@ class NoteItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.green,
+          color: Color(0xFF43AF43),
           borderRadius: BorderRadius.circular(12),
         ),
         child: ListTile(
