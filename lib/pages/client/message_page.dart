@@ -1,5 +1,7 @@
 import 'package:activity_2_flutter/pages/client/chat_page.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MessagePage extends StatefulWidget {
   @override
@@ -9,15 +11,11 @@ class MessagePage extends StatefulWidget {
 class _MessagePageState extends State<MessagePage> {
   int _currentIndex = 0;
 
-  // List of user names for example
-  final List<String> userNames = [
-    'Hazero Joykies',
-    'HiroCruz',
-    'Gianaly Flores',
-    'Shaina Padgayawon',
-    'Shainskie Aguilar',
-    'Jonnahnie Mae'
-  ];
+  // Firestore instance
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Current user
+  User? _currentUser = FirebaseAuth.instance.currentUser;
 
   @override
   Widget build(BuildContext context) {
@@ -58,45 +56,95 @@ class _MessagePageState extends State<MessagePage> {
           shape: RoundedAppBarShape(), // Custom AppBar shape
         ),
       ),
-      body: ListView.builder(
-        itemCount: userNames.length, // Example item count
-        itemBuilder: (context, index) {
-          return ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Color(0xFF43AF43),
-              child: Icon(Icons.person, color: Colors.white),
-            ),
-            title: Text(
-              userNames[index],
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text('Good morning! How high is your fever?'),
-            trailing: Text(
-              index == 0
-                  ? '9:30'
-                  : index == 1
-                      ? '10:45'
-                      : index == 2
-                          ? '3:37'
-                          : index == 3
-                              ? '2:35'
-                              : index == 4
-                                  ? '4:35'
-                                  : '1:30',
-              style: TextStyle(color: Colors.grey),
-            ),
-            onTap: () {
-              // Navigate to the ChatPage with the user's name
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ChatPage(),
-                ),
-              );
+      body: _currentUser != null ? _buildChatList() : Center(child: Text('No user found')),
+    );
+  }
+
+  // Build the chat list from Firestore
+  Widget _buildChatList() {
+  return StreamBuilder<QuerySnapshot>(
+    stream: _firestore
+        .collection('chats')
+        .where('client', isEqualTo: _currentUser?.uid)
+        .snapshots(),
+    builder: (context, clientSnapshot) {
+      if (clientSnapshot.connectionState == ConnectionState.waiting) {
+        return Center(child: CircularProgressIndicator());
+      }
+
+      if (clientSnapshot.hasError || !clientSnapshot.hasData) {
+        return Center(child: Text("No messages found"));
+      }
+
+      // Query for doctor as well
+      return StreamBuilder<QuerySnapshot>(
+        stream: _firestore
+            .collection('chats')
+            .where('doctor', isEqualTo: _currentUser?.uid)
+            .snapshots(),
+        builder: (context, doctorSnapshot) {
+          if (doctorSnapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          
+
+          // Combine both client and doctor chats
+          var allChats = [
+            ...clientSnapshot.data!.docs,
+            ...doctorSnapshot.data!.docs,
+          ];
+          if (allChats.length == 0) {
+            return Center(child: Text("No messages found"));
+          }
+
+          return ListView.builder(
+            itemCount: allChats.length,
+            itemBuilder: (context, index) {
+              var chat = allChats[index];
+              return _buildChatTile(chat);
             },
           );
         },
+      );
+    },
+  );
+}
+
+
+  // Build each chat tile
+  Widget _buildChatTile(QueryDocumentSnapshot chat) {
+    User? user = FirebaseAuth.instance.currentUser;
+    var chatData = chat.data() as Map<String, dynamic>;
+    var lastMessage = chatData['lastMessage'] ?? 'No messages yet';
+    var isDoc = user?.uid == chatData['doctor'];
+    var chatTitle = isDoc ? chatData['clientName'] :chatData['doctorName'];
+
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: Color(0xFF43AF43),
+        child: Icon(Icons.person, color: Colors.white),
       ),
+      title: Text(
+        chatTitle,
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      subtitle: Text(chatData['title']),
+      trailing: Text(
+        chatData['lastUpdated'] != null
+            ? (chatData['lastUpdated'] as Timestamp).toDate().toString().substring(11, 16)
+            : '',
+        style: TextStyle(color: Colors.grey),
+      ),
+      onTap: () {
+        // Navigate to the ChatPage with the chatDocumentId
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatPage(chatDocumentId: chat.id, chatData: chatData),
+          ),
+        );
+      },
     );
   }
 }

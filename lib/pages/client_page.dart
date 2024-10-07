@@ -1,8 +1,8 @@
 import 'package:activity_2_flutter/pages/client/message_page.dart';
 import 'package:activity_2_flutter/pages/client/task_page.dart';
+import 'package:activity_2_flutter/pages/doctor/notification_page.dart';
 import 'package:flutter/material.dart';
 import 'client/note_list_page.dart';
-import 'client/notification_page.dart';
 import 'client/settings_page.dart';
 
 class ClientPage extends StatefulWidget {

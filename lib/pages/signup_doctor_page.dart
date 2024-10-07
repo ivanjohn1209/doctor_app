@@ -12,6 +12,7 @@ class SignupDoctorPage extends StatefulWidget {
 class _SignupDoctorPageState extends State<SignupDoctorPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String dropdownValue = 'Doctor';
 
   final Map<String, TextEditingController> _controllers = {
     'email': TextEditingController(),
@@ -43,6 +44,8 @@ class _SignupDoctorPageState extends State<SignupDoctorPage> {
         email: _controllers['email']!.text,
         password: _controllers['password']!.text,
       );
+      
+      await userCredential.user!.sendEmailVerification();
 
       await _firestore.collection('accounts').doc(userCredential.user!.uid).set({
         'name': '${_controllers['firstName']!.text} ${_controllers['lastName']!.text}',
@@ -57,6 +60,7 @@ class _SignupDoctorPageState extends State<SignupDoctorPage> {
         'medicalSchool': _controllers['medicalSchool']!.text,
         'yearOfGraduation': _controllers['yearOfGraduation']!.text,
         'governmentId': _controllers['governmentId']!.text,
+        'type': dropdownValue,
       });
 
       Navigator.pushReplacementNamed(context, '/doctor');

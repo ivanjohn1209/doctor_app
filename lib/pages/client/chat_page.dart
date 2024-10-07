@@ -1,6 +1,22 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class ChatPage extends StatelessWidget {
+class ChatPage extends StatefulWidget {
+  final String chatDocumentId; // Pass the chatDocumentId to specify the chat
+  final dynamic? chatData; // Pass the chatDocumentId to specify the chat
+
+  ChatPage({required this.chatDocumentId, this.chatData});
+
+
+  @override
+  _ChatPageState createState() => _ChatPageState();
+}
+
+class _ChatPageState extends State<ChatPage> {
+  final TextEditingController _messageController = TextEditingController();
+  bool _isSending = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,7 +37,7 @@ class ChatPage extends StatelessWidget {
             SizedBox(width: 10),
             Text(
               'Doctor',
-              style: TextStyle(fontSize: 20,color: Colors.white),
+              style: TextStyle(fontSize: 20, color: Colors.white),
             ),
           ],
         ),
@@ -32,15 +48,40 @@ class ChatPage extends StatelessWidget {
         children: [
           // Message List
           Expanded(
-            child: ListView(
-              padding: EdgeInsets.all(16),
-              children: [
-                _buildMessageRow('Doctor', 'What brings you in today?', true),
-                _buildMessageRow('Patient', "I've had headaches for a week.", false),
-                _buildMessageRow('Doctor', 'Are they constant?', true),
-                _buildMessageRow('Patient', 'No, worse in the mornings.', false),
-                _buildMessageRow('Doctor', 'Try more water and rest.', true),
-              ],
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('chats')
+                  .doc(widget.chatDocumentId)
+                  .collection('convo')
+                  .orderBy('timestamp', descending: false) // Sort by timestamp
+                  .snapshots(),
+              builder: (context, snapshot) {
+                // if (snapshot.connectionState == ConnectionState.waiting) {
+                //   return Center(child: CircularProgressIndicator());
+                // }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(child: Text("No messages yet."));
+                }
+
+                var messages = snapshot.data!.docs;
+
+                return ListView.builder(
+                  padding: EdgeInsets.all(16),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    var messageData = messages[index];
+                          User? user = FirebaseAuth.instance.currentUser;
+                    var isDoc = messageData['sender'] == widget.chatData['doctor'];
+                    var isCurrUser = messageData['sender'] == user?.uid;
+
+                    return _buildMessageRow(
+                      isDoc ? widget.chatData['doctorName'] + " (Doctor)":widget.chatData['clientName'] + ' (Client)',
+                      messageData['message'],
+                      isCurrUser,
+                    );
+                  },
+                );
+              },
             ),
           ),
           // Input Field
@@ -51,14 +92,14 @@ class ChatPage extends StatelessWidget {
   }
 
   // Message Row
-  Widget _buildMessageRow(String sender, String message, bool isDoctor) {
+  Widget _buildMessageRow(String sender, String message, bool isCurrUser) {
     return Align(
-      alignment: isDoctor ? Alignment.centerLeft : Alignment.centerRight,
+      alignment: isCurrUser ? Alignment.centerLeft : Alignment.centerRight,
       child: Container(
         margin: EdgeInsets.symmetric(vertical: 5),
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isDoctor ? Colors.green.shade100 : Colors.white,
+          color: isCurrUser ? Colors.green.shade100 : Colors.white,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -99,23 +140,59 @@ class ChatPage extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: TextField(
-              decoration: InputDecoration(
+              controller: _messageController,
+              decoration: const InputDecoration(
                 hintText: 'Type your message...',
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(horizontal: 10),
               ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.send, color: Colors.green),
-            onPressed: () {
-              // Handle message send action
-            },
-          ),
+          _isSending
+              ? CircularProgressIndicator()
+              : IconButton(
+                  icon: const Icon(Icons.send, color: Colors.green),
+                  onPressed: _sendMessage,
+                ),
         ],
       ),
     );
+  }
+
+  // Send Message Function
+  Future<void> _sendMessage() async {
+    String message = _messageController.text.trim();
+
+    if (message.isNotEmpty) {
+      // setState(() {
+      //   _isSending = true;
+      // });
+
+      try {
+        // Get current user information
+                User? user = FirebaseAuth.instance.currentUser;
+        await FirebaseFirestore.instance
+            .collection('chats')
+            .doc(widget.chatDocumentId)
+            .collection('convo')
+            .add({
+          'message': message,
+          'sender': user?.uid, // Doctor or Patient
+          'timestamp': FieldValue.serverTimestamp(), // Timestamp
+        });
+
+        // Clear the message input field
+        _messageController.clear();
+      } catch (e) {
+        // Handle error (e.g., show a snackbar or dialog)
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to send message')));
+      } finally {
+        setState(() {
+          _isSending = false;
+        });
+      }
+    }
   }
 }

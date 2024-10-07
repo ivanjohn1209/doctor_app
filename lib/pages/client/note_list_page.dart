@@ -1,13 +1,15 @@
 import 'package:activity_2_flutter/main.dart';
+import 'package:activity_2_flutter/pages/client/add_note_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart' as intl; // Alias the intl import
 
 class Doctor {
   final String id;
   final String name;
-
-  Doctor({required this.id, required this.name});
+  final String specialty;
+  Doctor({required this.id, required this.name, required this.specialty});
 
   factory Doctor.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
@@ -15,6 +17,8 @@ class Doctor {
       id: doc.id,
       name: data['name'] ??
           '', // Adjust based on your actual Firestore field names
+      specialty: data['specialty'] ??
+          '', 
     );
   }
 }
@@ -74,6 +78,7 @@ class _NoteListPageState extends State<NoteListPage> {
             return Dialog.fullscreen(
               child: Column(
                 children: [
+                  
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -84,23 +89,23 @@ class _NoteListPageState extends State<NoteListPage> {
                             'Note Details:',
                             style: Theme.of(context).textTheme.headlineSmall,
                           ),
-                          SizedBox(height: 16.0),
+                          const SizedBox(height: 16.0),
                           Text('Content: ${note['content'] ?? 'No content'}'),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           Text('Timestamp: $formattedTime'),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           Text(
                               'Client Name: ${note['clientName'] ?? 'Unknown Client'}'),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           Text(
                               'Client Email: ${note['clientEmail'] ?? 'Unknown Email'}'),
                           TextButton(
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
-                            child: Text('Close'),
+                            child: const Text('Close'),
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           Expanded(
                             child: StreamBuilder<QuerySnapshot>(
                               stream: FirebaseFirestore.instance
@@ -157,13 +162,13 @@ class _NoteListPageState extends State<NoteListPage> {
                         Expanded(
                           child: TextField(
                             controller: _noteController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               hintText: 'Add a comment...',
                               border: OutlineInputBorder(),
                             ),
                           ),
                         ),
-                        SizedBox(width: 8.0),
+                        const SizedBox(width: 8.0),
                         ElevatedButton(
                           onPressed: () async {
                             if (_noteController.text.isNotEmpty) {
@@ -191,7 +196,7 @@ class _NoteListPageState extends State<NoteListPage> {
                               }
                             }
                           },
-                          child: Text('Add'),
+                          child: const Text('Add'),
                         ),
                       ],
                     ),
@@ -205,127 +210,12 @@ class _NoteListPageState extends State<NoteListPage> {
     );
   }
 
-  Future<dynamic> _showAddNoteDialog() {
-    _noteController.clear();
-    final userData = UserDataProvider.of(context)?.userData;
-    return showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return Dialog.fullscreen(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'Add Note:',
-                      textAlign: TextAlign.left,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 16.0),
-                    TextField(
-                      controller: _noteController,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter your note',
-                        contentPadding: EdgeInsets.symmetric(
-                            vertical: 8.0, horizontal: 12.0),
-                      ),
-                    ),
-                    const SizedBox(height: 16.0),
-                    InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'Doctor',
-                        border: UnderlineInputBorder(),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: dropdownValue,
-                          isExpanded: true,
-                          icon: Icon(Icons.arrow_drop_down),
-                          items: doctors
-                              .map<DropdownMenuItem<String>>((Doctor doctor) {
-                            return DropdownMenuItem<String>(
-                              value: doctor.id,
-                              child: Text(doctor.name),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              dropdownValue = newValue;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16.0),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: Text('Close'),
-                        ),
-                        SizedBox(width: 8.0),
-                        ElevatedButton(
-                          onPressed: () async {
-                            if (_noteController.text.isNotEmpty) {
-                              try {
-                                User? user = FirebaseAuth.instance.currentUser;
-                                if (user != null) {
-                                  await FirebaseFirestore.instance
-                                      .collection('accounts')
-                                      .doc(user.uid)
-                                      .collection('notes')
-                                      .add({
-                                    'content': _noteController.text,
-                                    'assignedTo': dropdownValue,
-                                    'clientName': userData?['name'],
-                                    'clientEmail': userData?['email'],
-                                    'clientId': user.uid,
-                                    'timestamp': Timestamp.now()
-                                  });
-
-                                  Navigator.pop(context);
-                                }
-                              } catch (e) {
-                                print("Failed to add note: $e");
-                              }
-                            }
-                          },
-                          child: Text('Save'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     User? user = _auth.currentUser;
     return Scaffold(
-      // appBar: PreferredSize(
-      //   preferredSize: Size.fromHeight(100), // Custom height
-      //   child: AppBar(
-      //     title: Text('My Notes'),
-      //     centerTitle: true,
-      //     backgroundColor: Color(0xFF43AF43),
-      //     shape: RoundedAppBarShape(), // Custom AppBar shape
-      //   ),
-      // ),
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(100), 
+        preferredSize: const Size.fromHeight(100), 
         child: AppBar(
           toolbarHeight: 200.0,
           title: const Column(
@@ -338,7 +228,7 @@ class _NoteListPageState extends State<NoteListPage> {
           ],
         ),
           centerTitle: true,
-          backgroundColor: Color(0xFF43AF43),
+          backgroundColor: const Color(0xFF43AF43),
           shape: RoundedAppBarShape(), // Custom AppBar shape
         ),
       ),
@@ -355,11 +245,11 @@ class _NoteListPageState extends State<NoteListPage> {
                         .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
+                        return const Center(child: CircularProgressIndicator());
                       }
 
                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return Center(child: Text('No notes available.'));
+                        return const Center(child: Text('No notes available.'));
                       }
 
                       var notes = snapshot.data!.docs;
@@ -368,13 +258,10 @@ class _NoteListPageState extends State<NoteListPage> {
                         itemCount: notes.length,
                         itemBuilder: (context, index) {
                           var note = notes[index];
-                          // return ListTile(
-                          //   title: Text(note['content']),
-                          //   subtitle:
-                          //       Text(note['timestamp'].toDate().toString()),
-                          //   onTap: () => _showNoteDetails(note),
-                          // );
-                          return NoteItem(title: note['content'], time: '5:00am');
+                          Timestamp timestamp = note['timestamp'] as Timestamp;
+                          DateTime dateTime = timestamp.toDate();
+                          String formattedDate1 = intl.DateFormat('MM/dd/yyyy hh:mm a').format(dateTime);
+                          return NoteItem(note: note, formattedTime: formattedDate1);
                         },
                       );
                     },
@@ -385,10 +272,18 @@ class _NoteListPageState extends State<NoteListPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddNoteDialog(),
-        child: Icon(Icons.add, color: Colors.white),
+        onPressed: () { 
+                  // Navigator.pushReplacementNamed(context, '/add-note');
+              final userData = UserDataProvider.of(context)?.userData;
+              Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => AddNotePage(userData)),
+            );
+
+        },
+        child: const Icon(Icons.add, color: Colors.white),
         tooltip: 'Add Note',
-        backgroundColor: Color(0xFF43AF43),
+        backgroundColor: const Color(0xFF43AF43),
       ),
     );
   }
@@ -396,36 +291,52 @@ class _NoteListPageState extends State<NoteListPage> {
 
 
 class NoteItem extends StatelessWidget {
-  final String title;
-  final String time;
+  final dynamic note; // Pass the whole note object
+  final String formattedTime;
 
-  NoteItem({required this.title, required this.time});
+  NoteItem({required this.note, required this.formattedTime});
 
   @override
   Widget build(BuildContext context) {
+    // Extracting values from the note object
+    String title = note['patientFeels'];
+    String name = note['clientName'];
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Color(0xFF43AF43),
+          color: const Color(0xFF43AF43),
           borderRadius: BorderRadius.circular(12),
         ),
         child: ListTile(
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          leading: Icon(Icons.radio_button_unchecked, color: Colors.white),
+          onTap: () {
+            // final userData = UserDataProvider.of(context)?.userData;
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(builder: (context) => NoteDetail(userData, noteData: note,)),
+            // );
+          },
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading:  Icon(note != null && note.data() != null && note.data().containsKey('approved')
+      ? (note['approved'] == true ? Icons.check_box_rounded : Icons.disabled_by_default_rounded)
+      : Icons.check_box_outline_blank
+           , color: Colors.white),
           title: Text(
             title,
-            style: TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white),
           ),
           trailing: Text(
-            time,
-            style: TextStyle(color: Colors.white),
+            formattedTime,
+            style: const TextStyle(color: Colors.white),
           ),
         ),
       ),
     );
   }
 }
+
+
 class RoundedAppBarShape extends RoundedRectangleBorder {
   @override
   Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
