@@ -1,5 +1,4 @@
 import 'dart:async'; // Import this for using Timer
-import 'package:activity_2_flutter/pages/client/add_note_page.dart';
 import 'package:activity_2_flutter/pages/not_verified_page.dart';
 import 'package:activity_2_flutter/pages/signup_doctor_page.dart';
 import 'package:activity_2_flutter/pages/signup_patient_page.dart';
@@ -11,7 +10,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pages/client_page.dart';
 import 'pages/doctor_page.dart';
 import 'pages/login_page.dart';
-import 'pages/signup_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

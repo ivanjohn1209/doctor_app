@@ -56,9 +56,6 @@ class _ChatPageState extends State<ChatPage> {
                   .orderBy('timestamp', descending: false) // Sort by timestamp
                   .snapshots(),
               builder: (context, snapshot) {
-                // if (snapshot.connectionState == ConnectionState.waiting) {
-                //   return Center(child: CircularProgressIndicator());
-                // }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return Center(child: Text("No messages yet."));
                 }
@@ -166,10 +163,6 @@ class _ChatPageState extends State<ChatPage> {
     String message = _messageController.text.trim();
 
     if (message.isNotEmpty) {
-      // setState(() {
-      //   _isSending = true;
-      // });
-
       try {
         // Get current user information
                 User? user = FirebaseAuth.instance.currentUser;

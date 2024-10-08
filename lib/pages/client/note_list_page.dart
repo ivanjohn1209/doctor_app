@@ -1,5 +1,6 @@
 import 'package:activity_2_flutter/main.dart';
 import 'package:activity_2_flutter/pages/client/add_note_page.dart';
+import 'package:activity_2_flutter/pages/doctor/note_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -63,153 +64,6 @@ class _NoteListPageState extends State<NoteListPage> {
     }
   }
 
-  Future<dynamic> _showNoteDetails(DocumentSnapshot note) async {
-    User? user = FirebaseAuth.instance.currentUser;
-    var timestamp = note['timestamp'];
-    var formattedTime = timestamp != null
-        ? (timestamp as Timestamp).toDate().toString()
-        : 'No timestamp';
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return Dialog.fullscreen(
-              child: Column(
-                children: [
-                  
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            'Note Details:',
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                          const SizedBox(height: 16.0),
-                          Text('Content: ${note['content'] ?? 'No content'}'),
-                          const SizedBox(height: 10),
-                          Text('Timestamp: $formattedTime'),
-                          const SizedBox(height: 10),
-                          Text(
-                              'Client Name: ${note['clientName'] ?? 'Unknown Client'}'),
-                          const SizedBox(height: 10),
-                          Text(
-                              'Client Email: ${note['clientEmail'] ?? 'Unknown Email'}'),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text('Close'),
-                          ),
-                          const SizedBox(height: 20),
-                          Expanded(
-                            child: StreamBuilder<QuerySnapshot>(
-                              stream: FirebaseFirestore.instance
-                                  .collection('accounts')
-                                  .doc(user?.uid)
-                                  .collection('notes')
-                                  .doc(note.id)
-                                  .collection('comments')
-                                  .orderBy('timestamp')
-                                  .snapshots(),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const Center(
-                                      child: CircularProgressIndicator());
-                                }
-                                if (!snapshot.hasData ||
-                                    snapshot.data!.docs.isEmpty) {
-                                  return const Center(
-                                      child: Text('No comments yet.'));
-                                }
-                                var comments = snapshot.data!.docs;
-
-                                return ListView.builder(
-                                  itemCount: comments.length,
-                                  itemBuilder: (context, index) {
-                                    var comment = comments[index];
-                                    var commentTimestamp = comment['timestamp'];
-                                    var commentFormattedTime =
-                                        commentTimestamp != null
-                                            ? (commentTimestamp as Timestamp)
-                                                .toDate()
-                                                .toString()
-                                            : 'No timestamp';
-
-                                    return ListTile(
-                                      title: Text(
-                                          comment['content'] ?? 'No content'),
-                                      subtitle: Text(commentFormattedTime),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: TextField(
-                            controller: _noteController,
-                            decoration: const InputDecoration(
-                              hintText: 'Add a comment...',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8.0),
-                        ElevatedButton(
-                          onPressed: () async {
-                            if (_noteController.text.isNotEmpty) {
-                              try {
-                                User? user = FirebaseAuth.instance.currentUser;
-                                if (user != null) {
-                                  await FirebaseFirestore.instance
-                                      .collection('accounts')
-                                      .doc(user.uid)
-                                      .collection('notes')
-                                      .doc(note.id)
-                                      .collection('comments')
-                                      .add({
-                                    'content': _noteController.text,
-                                    'clientName':
-                                        user.displayName ?? 'Anonymous',
-                                    'clientId': user.uid,
-                                    'timestamp': Timestamp.now()
-                                  });
-
-                                  _noteController.clear();
-                                }
-                              } catch (e) {
-                                print("Failed to add comment: $e");
-                              }
-                            }
-                          },
-                          child: const Text('Add'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     User? user = _auth.currentUser;
@@ -248,7 +102,7 @@ class _NoteListPageState extends State<NoteListPage> {
                         return const Center(child: CircularProgressIndicator());
                       }
 
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      if ((!snapshot.hasData || snapshot.data!.docs.isEmpty)) {
                         return const Center(child: Text('No notes available.'));
                       }
 
@@ -311,11 +165,11 @@ class NoteItem extends StatelessWidget {
         ),
         child: ListTile(
           onTap: () {
-            // final userData = UserDataProvider.of(context)?.userData;
-            // Navigator.push(
-            //   context,
-            //   MaterialPageRoute(builder: (context) => NoteDetail(userData, noteData: note,)),
-            // );
+            final userData = UserDataProvider.of(context)?.userData;
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => NoteDetail(userData, noteData: note,)),
+            );
           },
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           leading:  Icon(note != null && note.data() != null && note.data().containsKey('approved')
