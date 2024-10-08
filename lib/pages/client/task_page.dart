@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';  // Add this import for date formatting
+import 'package:intl/intl.dart';  // For date formatting
+import 'package:cloud_firestore/cloud_firestore.dart';  // Firestore package
+import 'package:firebase_auth/firebase_auth.dart';  // Firebase Auth package
 
 class TaskPage extends StatefulWidget {
   @override
   _TaskPageState createState() => _TaskPageState();
 }
-
 class _TaskPageState extends State<TaskPage> {
-  // Track the start of the current week
   DateTime _currentWeekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+  DateTime? _selectedDate = DateTime.now();  // Default selected date to today
+
+  // Get current user's UID
+  final String userId = FirebaseAuth.instance.currentUser!.uid;
 
   // Method to get the name of the month dynamically
   String get currentMonth => DateFormat.MMMM().format(_currentWeekStart);
 
-  // Method to get the days of the current week
+  // Get the days of the current week
   List<DateTime> get weekDays {
     return List.generate(7, (index) {
       return _currentWeekStart.add(Duration(days: index));
@@ -34,6 +38,45 @@ class _TaskPageState extends State<TaskPage> {
     });
   }
 
+  // Select date
+  void _selectDate(DateTime date) {
+    setState(() {
+      _selectedDate = date;
+    });
+  }
+
+  // Add a task to Firestore for the selected date
+  Future<void> _addTask(String title, String time) async {
+    if (_selectedDate != null) {
+      String formattedDate = DateFormat('MM-dd-yyyy').format(_selectedDate!);
+
+      await FirebaseFirestore.instance
+          .collection('accounts')
+          .doc(userId)
+          .collection('task')
+          .doc(formattedDate)
+          .set({
+        'tasks': FieldValue.arrayUnion([{'title': title, 'time': time}])
+      }, SetOptions(merge: true));  // Merge tasks for the selected date
+    }
+  }
+
+  // Stream to get tasks for the selected date
+  Stream<DocumentSnapshot> _getTasksForSelectedDate() {
+    if (_selectedDate != null) {
+      String formattedDate = DateFormat('MM-dd-yyyy').format(_selectedDate!);
+      return FirebaseFirestore.instance
+          .collection('accounts')
+          .doc(userId)
+          .collection('task')
+          .doc(formattedDate)
+          .snapshots();
+    } else {
+      // Return an empty stream if no date is selected
+      return Stream.empty();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,14 +84,14 @@ class _TaskPageState extends State<TaskPage> {
         backgroundColor: Colors.green,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
-          onPressed: _previousWeek,  // Go to the previous week
+          onPressed: _previousWeek,
         ),
-        title: Text(currentMonth),  // Display dynamic month
+        title: Text(currentMonth),
         centerTitle: true,
         actions: [
           IconButton(
             icon: Icon(Icons.arrow_forward),
-            onPressed: _nextWeek,  // Go to the next week
+            onPressed: _nextWeek,
           ),
         ],
       ),
@@ -61,18 +104,25 @@ class _TaskPageState extends State<TaskPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(7, (index) {
-                return Column(
-                  children: [
-                    Text(
-                      DateFormat.E().format(weekDays[index]).toUpperCase(),  // Display day name
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      "${weekDays[index].day}",  // Display day number
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
+                return GestureDetector(
+                  onTap: () => _selectDate(weekDays[index]),
+                  child: Column(
+                    children: [
+                      Text(
+                        DateFormat.E().format(weekDays[index]).toUpperCase(),
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        "${weekDays[index].day}",
+                        style: TextStyle(
+                          color: _selectedDate == weekDays[index]
+                              ? Colors.yellow
+                              : Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               }),
             ),
@@ -90,18 +140,116 @@ class _TaskPageState extends State<TaskPage> {
           ),
           // Task List
           Expanded(
-            child: ListView(
-              children: [
-                TaskItem(title: "Medicine", time: "10:00am"),
-                TaskItem(title: "Water", time: "9:00am"),
-                TaskItem(title: "Fruits", time: "8:30am"),
-                TaskItem(title: "Check-up", time: "8:00am"),
-                TaskItem(title: "Appointment", time: "5:00am"),
-              ],
+            child: StreamBuilder<DocumentSnapshot>(
+              stream: _getTasksForSelectedDate(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError || !snapshot.hasData || snapshot.data!.data() == null) {
+                  return Center(child: Text('No tasks available.'));
+                }
+
+                var tasks = snapshot.data!['tasks'] as List<dynamic>?;
+                if (tasks == null || tasks.isEmpty) {
+                  return Center(child: Text('No tasks available.'));
+                }
+
+                return ListView.builder(
+                  itemCount: tasks.length,
+                  itemBuilder: (context, index) {
+                    var task = tasks[index];
+                    return TaskItem(title: task['title'], time: task['time']);
+                  },
+                );
+              },
             ),
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green,
+        child: Icon(Icons.add),
+        onPressed: () {
+          if (_selectedDate != null) {
+            _showAddTaskDialog(context);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Please select a date first!'))
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  // Show a dialog to add a task
+  void _showAddTaskDialog(BuildContext context) {
+    String taskTitle = '';
+    TimeOfDay? selectedTime;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Add Task'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: InputDecoration(labelText: 'Task Title'),
+                onChanged: (value) {
+                  taskTitle = value;
+                },
+              ),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Text(
+                    selectedTime != null
+                        ? 'Time: ${selectedTime!.format(context)}'
+                        : 'Select Time',
+                  ),
+                  Spacer(),
+                  IconButton(
+                    icon: Icon(Icons.access_time),
+                    onPressed: () async {
+                      TimeOfDay? pickedTime = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                      );
+                      if (pickedTime != null) {
+                        setState(() {
+                          selectedTime = pickedTime;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (taskTitle.isNotEmpty && selectedTime != null) {
+                  String formattedTime = selectedTime!.format(context);
+                  _addTask(taskTitle, formattedTime);
+                  Navigator.of(context).pop();
+                }
+              },
+              child: Text('Add Task'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

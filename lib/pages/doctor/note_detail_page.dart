@@ -271,25 +271,12 @@ Widget _buildActionButtons() {
     return const Center(child: CircularProgressIndicator());
   }
 
-print(widget.userData?['type'] == 'Client');
 if(widget.userData?['type'] == 'Client'){
-  if(isApproved) {
-    return Row(
-    children: [
-      const SizedBox(width: 8.0),
-      ElevatedButton(
-        onPressed: _onSendMessage,
-        child: Text('Send Message'),
-      ),
-    ],
-  );
-  } else{
     return const Row(
     children: [
       SizedBox(width: 8.0),
     ],
   );
-  }
 }else{
   // Render buttons based on approval status
   return Row(

@@ -16,9 +16,18 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messageController = TextEditingController();
   bool _isSending = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose(); // Dispose the scroll controller
+    super.dispose();
+  }
+  @override
   Widget build(BuildContext context) {
+         User? user = FirebaseAuth.instance.currentUser;
+      var isDocVal = user?.uid == widget.chatData['doctor'];
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -27,17 +36,17 @@ class _ChatPageState extends State<ChatPage> {
             Navigator.pop(context);
           },
         ),
-        title: const Row(
+        title: Row(
           children: [
-            CircleAvatar(
+            const CircleAvatar(
               backgroundColor: Colors.white,
               radius: 20,
               child: Icon(Icons.person, color: Colors.green),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Text(
-              'Doctor',
-              style: TextStyle(fontSize: 20, color: Colors.white),
+             isDocVal ? widget.chatData['doctorName'] + " (Doctor)":widget.chatData['clientName'] + ' (Client)',
+              style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -61,9 +70,15 @@ class _ChatPageState extends State<ChatPage> {
                 }
 
                 var messages = snapshot.data!.docs;
-
+  // Scroll to the bottom after messages are built
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (_scrollController.hasClients) {
+                    _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+                  }
+                });
                 return ListView.builder(
-                  padding: EdgeInsets.all(16),
+                  controller: _scrollController, // Attach the scroll controller
+                  padding: const EdgeInsets.all(16),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     var messageData = messages[index];
