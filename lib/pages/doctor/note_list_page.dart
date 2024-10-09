@@ -1,11 +1,10 @@
-import 'package:activity_2_flutter/main.dart';
-import 'package:activity_2_flutter/pages/client/add_note_page.dart';
-import 'package:activity_2_flutter/pages/doctor/note_detail_page.dart';
+import 'package:care_connect/main.dart';
+import 'package:care_connect/pages/client/add_note_page.dart';
+import 'package:care_connect/pages/doctor/note_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart' as intl; // Alias the intl import
-
 
 class DoctorNoteListPage extends StatefulWidget {
   const DoctorNoteListPage({super.key});
@@ -25,7 +24,6 @@ class _DoctorNoteListPageState extends State<DoctorNoteListPage> {
     super.initState();
   }
 
-  
   Future<dynamic> _showNoteDetails(DocumentSnapshot note) async {
     User? user = FirebaseAuth.instance.currentUser;
     var timestamp = note['timestamp'];
@@ -41,7 +39,6 @@ class _DoctorNoteListPageState extends State<DoctorNoteListPage> {
             return Dialog.fullscreen(
               child: Column(
                 children: [
-                  
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -178,18 +175,18 @@ class _DoctorNoteListPageState extends State<DoctorNoteListPage> {
     User? user = _auth.currentUser;
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(100), 
+        preferredSize: const Size.fromHeight(100),
         child: AppBar(
           toolbarHeight: 200.0,
           title: const Column(
-          children: [
-          const SizedBox(height: 20),
-          Text(
-            "Assigned Notes",
-            style: TextStyle(fontSize: 20, color: Colors.white), 
-        ),
-          ],
-        ),
+            children: [
+              const SizedBox(height: 20),
+              Text(
+                "Assigned Notes",
+                style: TextStyle(fontSize: 20, color: Colors.white),
+              ),
+            ],
+          ),
           centerTitle: true,
           backgroundColor: const Color(0xFF43AF43),
           shape: RoundedAppBarShape(), // Custom AppBar shape
@@ -223,8 +220,11 @@ class _DoctorNoteListPageState extends State<DoctorNoteListPage> {
                           Timestamp timestamp = note['timestamp'] as Timestamp;
                           DateTime dateTime = timestamp.toDate();
                           print(dateTime);
-                          String formattedDate1 = intl.DateFormat('MM/dd/yyyy hh:mm a').format(dateTime);
-                          return NoteItem(note: note, formattedTime: formattedDate1);
+                          String formattedDate1 =
+                              intl.DateFormat('MM/dd/yyyy hh:mm a')
+                                  .format(dateTime);
+                          return NoteItem(
+                              note: note, formattedTime: formattedDate1);
                         },
                       );
                     },
@@ -237,7 +237,6 @@ class _DoctorNoteListPageState extends State<DoctorNoteListPage> {
     );
   }
 }
-
 
 class NoteItem extends StatelessWidget {
   final dynamic note; // Pass the whole note object
@@ -263,14 +262,24 @@ class NoteItem extends StatelessWidget {
             final userData = UserDataProvider.of(context)?.userData;
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => NoteDetail(userData, noteData: note,)),
+              MaterialPageRoute(
+                  builder: (context) => NoteDetail(
+                        userData,
+                        noteData: note,
+                      )),
             );
           },
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          leading:  Icon(note != null && note.data() != null && note.data().containsKey('approved')
-      ? (note['approved'] == true ? Icons.check_box_rounded : Icons.disabled_by_default_rounded)
-      : Icons.check_box_outline_blank
-           , color: Colors.white),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: Icon(
+              note != null &&
+                      note.data() != null &&
+                      note.data().containsKey('approved')
+                  ? (note['approved'] == true
+                      ? Icons.check_box_rounded
+                      : Icons.disabled_by_default_rounded)
+                  : Icons.check_box_outline_blank,
+              color: Colors.white),
           title: Text(
             title,
             style: const TextStyle(color: Colors.white),
@@ -296,9 +305,11 @@ class RoundedAppBarShape extends RoundedRectangleBorder {
     return Path()
       ..moveTo(0, 0)
       ..lineTo(0, rect.height - radius)
-      ..quadraticBezierTo(0, rect.height, radius, rect.height) // Bottom-left curve
+      ..quadraticBezierTo(
+          0, rect.height, radius, rect.height) // Bottom-left curve
       ..lineTo(rect.width - radius, rect.height)
-      ..quadraticBezierTo(rect.width, rect.height, rect.width, rect.height - radius) // Bottom-right curve
+      ..quadraticBezierTo(rect.width, rect.height, rect.width,
+          rect.height - radius) // Bottom-right curve
       ..lineTo(rect.width, 0) // Line to the top-right corner
       ..close(); // Close the path
   }

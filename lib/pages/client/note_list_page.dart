@@ -1,6 +1,6 @@
-import 'package:activity_2_flutter/main.dart';
-import 'package:activity_2_flutter/pages/client/add_note_page.dart';
-import 'package:activity_2_flutter/pages/doctor/note_detail_page.dart';
+import 'package:care_connect/main.dart';
+import 'package:care_connect/pages/client/add_note_page.dart';
+import 'package:care_connect/pages/doctor/note_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,8 +18,7 @@ class Doctor {
       id: doc.id,
       name: data['name'] ??
           '', // Adjust based on your actual Firestore field names
-      specialty: data['specialty'] ??
-          '', 
+      specialty: data['specialty'] ?? '',
     );
   }
 }
@@ -69,18 +68,18 @@ class _NoteListPageState extends State<NoteListPage> {
     User? user = _auth.currentUser;
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(100), 
+        preferredSize: const Size.fromHeight(100),
         child: AppBar(
           toolbarHeight: 200.0,
           title: const Column(
-          children: [
-          const SizedBox(height: 20),
-          Text(
-            "My Notes",
-            style: TextStyle(fontSize: 20, color: Colors.white), 
-        ),
-          ],
-        ),
+            children: [
+              const SizedBox(height: 20),
+              Text(
+                "My Notes",
+                style: TextStyle(fontSize: 20, color: Colors.white),
+              ),
+            ],
+          ),
           centerTitle: true,
           backgroundColor: const Color(0xFF43AF43),
           shape: RoundedAppBarShape(), // Custom AppBar shape
@@ -114,8 +113,11 @@ class _NoteListPageState extends State<NoteListPage> {
                           var note = notes[index];
                           Timestamp timestamp = note['timestamp'] as Timestamp;
                           DateTime dateTime = timestamp.toDate();
-                          String formattedDate1 = intl.DateFormat('MM/dd/yyyy hh:mm a').format(dateTime);
-                          return NoteItem(note: note, formattedTime: formattedDate1);
+                          String formattedDate1 =
+                              intl.DateFormat('MM/dd/yyyy hh:mm a')
+                                  .format(dateTime);
+                          return NoteItem(
+                              note: note, formattedTime: formattedDate1);
                         },
                       );
                     },
@@ -126,14 +128,13 @@ class _NoteListPageState extends State<NoteListPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () { 
-                  // Navigator.pushReplacementNamed(context, '/add-note');
-              final userData = UserDataProvider.of(context)?.userData;
-              Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => AddNotePage(userData)),
-            );
-
+        onPressed: () {
+          // Navigator.pushReplacementNamed(context, '/add-note');
+          final userData = UserDataProvider.of(context)?.userData;
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddNotePage(userData)),
+          );
         },
         child: const Icon(Icons.add, color: Colors.white),
         tooltip: 'Add Note',
@@ -142,7 +143,6 @@ class _NoteListPageState extends State<NoteListPage> {
     );
   }
 }
-
 
 class NoteItem extends StatelessWidget {
   final dynamic note; // Pass the whole note object
@@ -168,14 +168,24 @@ class NoteItem extends StatelessWidget {
             final userData = UserDataProvider.of(context)?.userData;
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => NoteDetail(userData, noteData: note,)),
+              MaterialPageRoute(
+                  builder: (context) => NoteDetail(
+                        userData,
+                        noteData: note,
+                      )),
             );
           },
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          leading:  Icon(note != null && note.data() != null && note.data().containsKey('approved')
-      ? (note['approved'] == true ? Icons.check_box_rounded : Icons.disabled_by_default_rounded)
-      : Icons.check_box_outline_blank
-           , color: Colors.white),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: Icon(
+              note != null &&
+                      note.data() != null &&
+                      note.data().containsKey('approved')
+                  ? (note['approved'] == true
+                      ? Icons.check_box_rounded
+                      : Icons.disabled_by_default_rounded)
+                  : Icons.check_box_outline_blank,
+              color: Colors.white),
           title: Text(
             title,
             style: const TextStyle(color: Colors.white),
@@ -190,7 +200,6 @@ class NoteItem extends StatelessWidget {
   }
 }
 
-
 class RoundedAppBarShape extends RoundedRectangleBorder {
   @override
   Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
@@ -198,9 +207,11 @@ class RoundedAppBarShape extends RoundedRectangleBorder {
     return Path()
       ..moveTo(0, 0)
       ..lineTo(0, rect.height - radius)
-      ..quadraticBezierTo(0, rect.height, radius, rect.height) // Bottom-left curve
+      ..quadraticBezierTo(
+          0, rect.height, radius, rect.height) // Bottom-left curve
       ..lineTo(rect.width - radius, rect.height)
-      ..quadraticBezierTo(rect.width, rect.height, rect.width, rect.height - radius) // Bottom-right curve
+      ..quadraticBezierTo(rect.width, rect.height, rect.width,
+          rect.height - radius) // Bottom-right curve
       ..lineTo(rect.width, 0) // Line to the top-right corner
       ..close(); // Close the path
   }

@@ -1,4 +1,4 @@
-# activity_2_flutter
+# care_connect
 
 A new Flutter project.
 

@@ -1,8 +1,8 @@
 import 'dart:async'; // Import this for using Timer
-import 'package:activity_2_flutter/pages/not_verified_page.dart';
-import 'package:activity_2_flutter/pages/signup_doctor_page.dart';
-import 'package:activity_2_flutter/pages/signup_patient_page.dart';
-import 'package:activity_2_flutter/pages/user_selection_page.dart';
+import 'package:care_connect/pages/not_verified_page.dart';
+import 'package:care_connect/pages/signup_doctor_page.dart';
+import 'package:care_connect/pages/signup_patient_page.dart';
+import 'package:care_connect/pages/user_selection_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -77,7 +77,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
       if (user.emailVerified) {
         String userType = userData['type'] ?? 'Unknown';
         // If verified, navigate to the correct page
-        Navigator.pushReplacementNamed(context, userType == 'Client' ? '/client' : '/doctor');
+        Navigator.pushReplacementNamed(
+            context, userType == 'Client' ? '/client' : '/doctor');
         _verificationTimer?.cancel(); // Stop the timer if verified
       }
     });
@@ -101,12 +102,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
               if (userSnapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: CircularProgressIndicator());
               } else if (userSnapshot.hasData) {
-                var userData = userSnapshot.data!.data() as Map<String, dynamic>?;
+                var userData =
+                    userSnapshot.data!.data() as Map<String, dynamic>?;
 
                 if (userData == null) {
                   return LoginPage();
                 }
-          
+
                 String userType = userData['type'] ?? 'Unknown';
                 if (user.emailVerified) {
                   return UserDataProvider(
@@ -163,21 +165,24 @@ class AuthGuard extends StatelessWidget {
               if (userSnapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: CircularProgressIndicator());
               } else if (userSnapshot.hasData) {
-                var userData = userSnapshot.data!.data() as Map<String, dynamic>?;
+                var userData =
+                    userSnapshot.data!.data() as Map<String, dynamic>?;
 
                 if (userData == null) {
                   return LoginPage();
                 }
 
-               String userType = userData['type'] ?? 'Unknown';
+                String userType = userData['type'] ?? 'Unknown';
                 if (user.emailVerified) {
                   return UserDataProvider(
                     userData: userData,
-                    child: isChild == true ? this.child :( userType == 'Client'
-                        ? ClientPage()
-                        : userType == 'Doctor'
-                            ? DoctorPage()
-                            : Center(child: Text('Unknown user type'))),
+                    child: isChild == true
+                        ? this.child
+                        : (userType == 'Client'
+                            ? ClientPage()
+                            : userType == 'Doctor'
+                                ? DoctorPage()
+                                : Center(child: Text('Unknown user type'))),
                   );
                 } else {
                   return NotVerifiedPage(); // Redirect to not verified page

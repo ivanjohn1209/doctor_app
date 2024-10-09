@@ -1,5 +1,4 @@
-import 'package:activity_2_flutter/main.dart';
-import 'package:activity_2_flutter/pages/client/note_list_page.dart';
+import 'package:care_connect/pages/client/note_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -28,7 +27,8 @@ class _AddNotePageState extends State<AddNotePage> {
   };
 
   String? dropdownValue; // Initialize this with your default value if needed
-  List<Doctor> doctors = []; // Replace this with your method of fetching doctors
+  List<Doctor> doctors =
+      []; // Replace this with your method of fetching doctors
 
   @override
   void initState() {
@@ -93,12 +93,12 @@ class _AddNotePageState extends State<AddNotePage> {
             .doc(dropdownValue)
             .collection('notifications')
             .add({
-              'name': widget.userData?['name'],
-              'email': widget.userData?['email'],
-              'noteId': noteId, // Add the note ID here
-              'message': widget.userData?['name'] + ' sent a consultation request',
-              'timestamp': Timestamp.now(),
-            });
+          'name': widget.userData?['name'],
+          'email': widget.userData?['email'],
+          'noteId': noteId, // Add the note ID here
+          'message': widget.userData?['name'] + ' sent a consultation request',
+          'timestamp': Timestamp.now(),
+        });
 
         Navigator.pop(context); // Close the dialog after saving
       }
@@ -107,7 +107,8 @@ class _AddNotePageState extends State<AddNotePage> {
     }
   }
 
-  Widget _buildTextField(String key, String label, {bool obscureText = false, bool readOnly = false, VoidCallback? onTap}) {
+  Widget _buildTextField(String key, String label,
+      {bool obscureText = false, bool readOnly = false, VoidCallback? onTap}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -175,7 +176,8 @@ class _AddNotePageState extends State<AddNotePage> {
               const Text("Assigned Doctor:"),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(20),
@@ -185,7 +187,8 @@ class _AddNotePageState extends State<AddNotePage> {
                     value: dropdownValue,
                     isExpanded: true,
                     icon: const Icon(Icons.arrow_drop_down),
-                    items: doctors.map<DropdownMenuItem<String>>((Doctor doctor) {
+                    items:
+                        doctors.map<DropdownMenuItem<String>>((Doctor doctor) {
                       return DropdownMenuItem<String>(
                         value: doctor.id,
                         child: Text(doctor.name + ' - ' + doctor.specialty),
@@ -212,12 +215,15 @@ class _AddNotePageState extends State<AddNotePage> {
                     child: const Text('Close'),
                   ),
                   const SizedBox(width: 8.0),
-                                        _isLoading
-                          ? const Center(child: CircularProgressIndicator(),widthFactor: 2.0,) : 
-                  ElevatedButton(
-                    onPressed: saveNote,
-                    child: const Text('Save'),
-                  ),
+                  _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(),
+                          widthFactor: 2.0,
+                        )
+                      : ElevatedButton(
+                          onPressed: saveNote,
+                          child: const Text('Save'),
+                        ),
                 ],
               ),
             ],

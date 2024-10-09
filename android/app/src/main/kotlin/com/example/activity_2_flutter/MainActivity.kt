@@ -1,4 +1,4 @@
-package com.example.activity_2_flutter
+package com.example.care_connect
 
 import io.flutter.embedding.android.FlutterActivity
 

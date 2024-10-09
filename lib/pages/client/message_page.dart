@@ -1,4 +1,4 @@
-import 'package:activity_2_flutter/pages/client/chat_page.dart';
+import 'package:care_connect/pages/client/chat_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -36,7 +36,8 @@ class _MessagePageState extends State<MessagePage> {
               const SizedBox(height: 10),
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 height: 40,
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -56,61 +57,60 @@ class _MessagePageState extends State<MessagePage> {
           shape: RoundedAppBarShape(), // Custom AppBar shape
         ),
       ),
-      body: _currentUser != null ? _buildChatList() : Center(child: Text('No user found')),
+      body: _currentUser != null
+          ? _buildChatList()
+          : Center(child: Text('No user found')),
     );
   }
 
   // Build the chat list from Firestore
   Widget _buildChatList() {
-  return StreamBuilder<QuerySnapshot>(
-    stream: _firestore
-        .collection('chats')
-        .where('client', isEqualTo: _currentUser?.uid)
-        .snapshots(),
-    builder: (context, clientSnapshot) {
-      if (clientSnapshot.connectionState == ConnectionState.waiting) {
-        return Center(child: CircularProgressIndicator());
-      }
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore
+          .collection('chats')
+          .where('client', isEqualTo: _currentUser?.uid)
+          .snapshots(),
+      builder: (context, clientSnapshot) {
+        if (clientSnapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
 
-      if (clientSnapshot.hasError || !clientSnapshot.hasData) {
-        return Center(child: Text("No messages found"));
-      }
+        if (clientSnapshot.hasError || !clientSnapshot.hasData) {
+          return Center(child: Text("No messages found"));
+        }
 
-      // Query for doctor as well
-      return StreamBuilder<QuerySnapshot>(
-        stream: _firestore
-            .collection('chats')
-            .where('doctor', isEqualTo: _currentUser?.uid)
-            .snapshots(),
-        builder: (context, doctorSnapshot) {
-          if (doctorSnapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
+        // Query for doctor as well
+        return StreamBuilder<QuerySnapshot>(
+          stream: _firestore
+              .collection('chats')
+              .where('doctor', isEqualTo: _currentUser?.uid)
+              .snapshots(),
+          builder: (context, doctorSnapshot) {
+            if (doctorSnapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
 
-          
+            // Combine both client and doctor chats
+            var allChats = [
+              ...clientSnapshot.data!.docs,
+              ...doctorSnapshot.data!.docs,
+            ];
+            if (allChats.length == 0) {
+              return Center(child: Text("No messages found"));
+            }
 
-          // Combine both client and doctor chats
-          var allChats = [
-            ...clientSnapshot.data!.docs,
-            ...doctorSnapshot.data!.docs,
-          ];
-          if (allChats.length == 0) {
-            return Center(child: Text("No messages found"));
-          }
-
-          return ListView.builder(
-            itemCount: allChats.length,
-            itemBuilder: (context, index) {
-              var chat = allChats[index];
-              return _buildChatTile(chat);
-            },
-          );
-        },
-      );
-    },
-  );
-}
-
+            return ListView.builder(
+              itemCount: allChats.length,
+              itemBuilder: (context, index) {
+                var chat = allChats[index];
+                return _buildChatTile(chat);
+              },
+            );
+          },
+        );
+      },
+    );
+  }
 
   // Build each chat tile
   Widget _buildChatTile(QueryDocumentSnapshot chat) {
@@ -118,7 +118,7 @@ class _MessagePageState extends State<MessagePage> {
     var chatData = chat.data() as Map<String, dynamic>;
     var lastMessage = chatData['lastMessage'] ?? 'No messages yet';
     var isDoc = user?.uid == chatData['doctor'];
-    var chatTitle = isDoc ? chatData['clientName'] :chatData['doctorName'];
+    var chatTitle = isDoc ? chatData['clientName'] : chatData['doctorName'];
 
     return ListTile(
       leading: CircleAvatar(
@@ -132,7 +132,10 @@ class _MessagePageState extends State<MessagePage> {
       subtitle: Text(chatData['title']),
       trailing: Text(
         chatData['lastUpdated'] != null
-            ? (chatData['lastUpdated'] as Timestamp).toDate().toString().substring(11, 16)
+            ? (chatData['lastUpdated'] as Timestamp)
+                .toDate()
+                .toString()
+                .substring(11, 16)
             : '',
         style: TextStyle(color: Colors.grey),
       ),
@@ -141,7 +144,8 @@ class _MessagePageState extends State<MessagePage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ChatPage(chatDocumentId: chat.id, chatData: chatData),
+            builder: (context) =>
+                ChatPage(chatDocumentId: chat.id, chatData: chatData),
           ),
         );
       },
@@ -156,9 +160,11 @@ class RoundedAppBarShape extends RoundedRectangleBorder {
     return Path()
       ..moveTo(0, 0)
       ..lineTo(0, rect.height - radius)
-      ..quadraticBezierTo(0, rect.height, radius, rect.height) // Bottom-left curve
+      ..quadraticBezierTo(
+          0, rect.height, radius, rect.height) // Bottom-left curve
       ..lineTo(rect.width - radius, rect.height)
-      ..quadraticBezierTo(rect.width, rect.height, rect.width, rect.height - radius) // Bottom-right curve
+      ..quadraticBezierTo(rect.width, rect.height, rect.width,
+          rect.height - radius) // Bottom-right curve
       ..lineTo(rect.width, 0) // Line to the top-right corner
       ..close(); // Close the path
   }
