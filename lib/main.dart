@@ -21,6 +21,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -76,10 +77,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
       user = FirebaseAuth.instance.currentUser!; // Get the updated user
       if (user.emailVerified) {
         String userType = userData['type'] ?? 'Unknown';
-        // If verified, navigate to the correct page
+
         Navigator.pushReplacementNamed(
             context, userType == 'Client' ? '/client' : '/doctor');
-        _verificationTimer?.cancel(); // Stop the timer if verified
+        _verificationTimer?.cancel();
       }
     });
   }
@@ -122,7 +123,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
                 } else {
                   // Start the verification timer
                   _startVerificationTimer(user, userData);
-                  return NotVerifiedPage(); // Redirect to not verified page
+                  return NotVerifiedPage();
                 }
               } else {
                 return LoginPage();
@@ -143,7 +144,7 @@ extension on User {
 
 class AuthGuard extends StatelessWidget {
   final Widget child;
-  final bool? isChild; // Make isChild optional by making it nullable
+  final bool? isChild;
 
   const AuthGuard({required this.child, this.isChild});
 
@@ -185,7 +186,7 @@ class AuthGuard extends StatelessWidget {
                                 : Center(child: Text('Unknown user type'))),
                   );
                 } else {
-                  return NotVerifiedPage(); // Redirect to not verified page
+                  return NotVerifiedPage();
                 }
               } else {
                 return LoginPage();
